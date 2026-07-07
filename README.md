@@ -1,56 +1,67 @@
-# Welcome to your Expo app 👋
+# Workout Journal
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native (Expo) workout journal. Log exercises with sets, reps, and optional weight, add notes, and watch your calendar fill up — with a yearly workout count and a streak that respects your planned rest days.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Home calendar** — days you worked out are highlighted; tap one to open that entry, tap an empty past day to backfill it.
+- **Year tracker** — total workouts logged this year.
+- **Smart streak** — set how many rest days per week you take (Settings); the streak survives up to that many skipped days in any rolling week and warns you when it's at risk.
+- **Journal entries** — pick from ~35 built-in exercises grouped by muscle group, or add your own custom ones. Track sets × reps, optional weight (lb/kg), and free-form notes. Entries can be edited, reordered, and deleted.
+- **Cloud sync** — email/password accounts via Supabase; your data follows you across devices.
 
-   ```bash
-   npm install
-   ```
+## Setup
 
-2. Start the app
+### 1. Create the Supabase project
 
-   ```bash
-   npx expo start
-   ```
+1. Create a free project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor → New query**, paste the contents of [`supabase/schema.sql`](supabase/schema.sql), and run it. This creates the tables, row-level security policies, and seeds the built-in exercise list.
+3. (Recommended for v1) Under **Authentication → Sign In / Providers → Email**, turn off **Confirm email** so new accounts can sign in immediately. If you leave it on, the app will tell users to check their inbox.
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 2. Configure the app
 
 ```bash
-npm run reset-project
+cp .env.example .env
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Fill in the two values from your Supabase dashboard (**Project Settings → API**):
 
-### Other setup steps
+```
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-PUBLIC-KEY
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### 3. Run it
 
-## Learn more
+```bash
+npm install
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Scan the QR code with the [Expo Go](https://expo.dev/go) app on your phone, or press `i` / `a` for the iOS/Android simulator, or `w` for the browser.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Tests
 
-## Join the community
+The streak and year-count logic lives in [`src/lib/stats.ts`](src/lib/stats.ts) and is covered by unit tests:
 
-Join our community of developers creating universal apps.
+```bash
+npm test
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Project structure
+
+```
+src/
+  app/                 Expo Router screens
+    (auth)/            sign-in, sign-up
+    (app)/             home (calendar + stats), settings
+      entry/[date]/    entry detail view + create/edit screen
+  components/          button, card, exercise picker modal
+  context/auth.tsx     Supabase session provider
+  lib/                 supabase client, data access, streak logic, theme
+supabase/schema.sql    tables, RLS policies, seed exercises
+```
+
+## Streak rule
+
+Configure your planned rest days per week (0–6) in Settings. Within a streak, every rolling 7-day window may contain at most that many days without a workout. The streak is measured in calendar days from the oldest to the newest workout of the unbroken run, and a day that isn't over yet never hurts you — the home screen just warns you when today's workout is needed to keep the streak alive.
