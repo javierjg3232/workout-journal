@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { addDays } from '../dates';
-import { currentStreak, workoutsThisYear } from '../stats';
+import { currentStreak, workoutsThisMonth, workoutsThisYear } from '../stats';
 
 const TODAY = '2026-07-07';
 
@@ -18,6 +18,17 @@ describe('workoutsThisYear', () => {
 
   it('returns 0 with no workouts', () => {
     expect(workoutsThisYear([], TODAY)).toBe(0);
+  });
+});
+
+describe('workoutsThisMonth', () => {
+  it('counts only distinct dates in the current month', () => {
+    const dates = ['2026-07-01', '2026-07-01', '2026-07-06', '2026-06-30', '2025-07-15'];
+    expect(workoutsThisMonth(dates, TODAY)).toBe(2);
+  });
+
+  it('returns 0 with no workouts this month', () => {
+    expect(workoutsThisMonth(['2026-06-30'], TODAY)).toBe(0);
   });
 });
 

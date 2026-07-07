@@ -13,10 +13,9 @@ export default function AppLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Workout Journal' }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="entry/[date]/index" options={{ title: 'Entry' }} />
       <Stack.Screen name="entry/[date]/edit" options={{ title: 'Edit Entry' }} />
-      <Stack.Screen name="settings" options={{ title: 'Settings' }} />
     </Stack>
   );
 }

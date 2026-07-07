@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { Wordmark } from '@/components/wordmark';
 import { showAlert } from '@/lib/alert';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -61,8 +62,8 @@ export default function SignUpScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.container}>
-          <Text style={[styles.title, { color: colors.text }]}>Create account</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <Wordmark />
+          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
             Your journal syncs to the cloud and follows you across devices.
           </Text>
 
@@ -95,10 +96,13 @@ export default function SignUpScreen() {
             onChangeText={setConfirm}
           />
 
-          <Button title="Sign Up" onPress={handleSignUp} loading={submitting} style={styles.button} />
+          <Button title="Sign up" onPress={handleSignUp} loading={submitting} style={styles.button} />
+        </View>
 
-          <Link href="/sign-in" style={styles.link}>
-            <Text style={{ color: colors.primary }}>Already have an account? Sign in</Text>
+        <View style={[styles.footer, { borderTopColor: colors.separator }]}>
+          <Text style={{ color: colors.textSecondary, fontSize: 14 }}>Have an account? </Text>
+          <Link href="/sign-in">
+            <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>Log in</Text>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -109,16 +113,21 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 12 },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
-  subtitle: { fontSize: 15, textAlign: 'center', marginBottom: 16 },
+  container: { flex: 1, justifyContent: 'center', paddingHorizontal: 28, gap: 10 },
+  tagline: { fontSize: 14, textAlign: 'center', marginBottom: 22 },
   input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    paddingHorizontal: 12,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 15,
   },
-  button: { marginTop: 8 },
-  link: { alignSelf: 'center', marginTop: 16, padding: 4 },
+  button: { marginTop: 10 },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 18,
+  },
 });

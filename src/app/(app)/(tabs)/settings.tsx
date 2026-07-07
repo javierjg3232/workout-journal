@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
-import { Card } from '@/components/card';
-import { confirmAction, showAlert } from '@/lib/alert';
 import { useAuth } from '@/context/auth';
+import { confirmAction, showAlert } from '@/lib/alert';
 import { fetchProfile, updateProfile } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -54,9 +53,11 @@ export default function SettingsScreen() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.content}
     >
-      <Card style={styles.card}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Planned rest days per week</Text>
-        <Text style={[styles.cardHint, { color: colors.textSecondary }]}>
+      <View style={[styles.section, { borderBottomColor: colors.separator }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Planned rest days per week
+        </Text>
+        <Text style={[styles.sectionHint, { color: colors.textSecondary }]}>
           Your streak survives up to this many skipped days in any rolling week.
         </Text>
         <View style={styles.chips}>
@@ -70,7 +71,7 @@ export default function SettingsScreen() {
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: selected ? colors.primary : colors.card,
+                    backgroundColor: selected ? colors.primary : 'transparent',
                     borderColor: selected ? colors.primary : colors.inputBorder,
                   },
                 ]}
@@ -87,10 +88,10 @@ export default function SettingsScreen() {
             );
           })}
         </View>
-      </Card>
+      </View>
 
-      <Card style={styles.card}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Default weight unit</Text>
+      <View style={[styles.section, { borderBottomColor: colors.separator }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Default weight unit</Text>
         <View style={styles.chips}>
           {(['lb', 'kg'] as const).map((value) => {
             const selected = unit === value;
@@ -102,7 +103,7 @@ export default function SettingsScreen() {
                   styles.chip,
                   styles.unitChip,
                   {
-                    backgroundColor: selected ? colors.primary : colors.card,
+                    backgroundColor: selected ? colors.primary : 'transparent',
                     borderColor: selected ? colors.primary : colors.inputBorder,
                   },
                 ]}
@@ -119,10 +120,10 @@ export default function SettingsScreen() {
             );
           })}
         </View>
-      </Card>
+      </View>
 
-      <Card style={styles.card}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Account</Text>
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
         <Text style={[styles.email, { color: colors.textSecondary }]}>
           {session?.user.email ?? ''}
         </Text>
@@ -139,23 +140,28 @@ export default function SettingsScreen() {
             })
           }
         />
-      </Card>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 14, paddingBottom: 32 },
-  card: { gap: 10 },
-  cardTitle: { fontSize: 16, fontWeight: '700' },
-  cardHint: { fontSize: 13, lineHeight: 18 },
+  content: { paddingBottom: 32 },
+  section: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  sectionTitle: { fontSize: 15, fontWeight: '700' },
+  sectionHint: { fontSize: 13, lineHeight: 18 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     minWidth: 42,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 7,
     paddingHorizontal: 12,
   },
   unitChip: { minWidth: 56 },

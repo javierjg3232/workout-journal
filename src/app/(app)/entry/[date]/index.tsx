@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
-import { Card } from '@/components/card';
+import { MuscleAvatar } from '@/components/muscle-avatar';
 import { confirmAction, showAlert } from '@/lib/alert';
 import { deleteEntry, fetchEntryByDate } from '@/lib/api';
 import { formatDisplayDate, formatShortDate } from '@/lib/dates';
@@ -61,28 +61,25 @@ export default function EntryDetailScreen() {
         {entry === undefined && <ActivityIndicator color={colors.primary} style={styles.loader} />}
 
         {entry === null && (
-          <Card style={styles.emptyCard}>
+          <View style={styles.empty}>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               No entry for this day.
             </Text>
             <Button title="Create Entry" onPress={() => router.replace(`/entry/${date}/edit`)} />
-          </Card>
+          </View>
         )}
 
         {entry && (
           <>
-            <Card style={styles.exercisesCard}>
+            <View style={[styles.section, { borderTopColor: colors.separator }]}>
               {entry.entry_exercises.length === 0 ? (
-                <Text style={{ color: colors.textMuted }}>No exercises logged.</Text>
+                <Text style={[styles.noExercises, { color: colors.textMuted }]}>
+                  No exercises logged.
+                </Text>
               ) : (
-                entry.entry_exercises.map((item, index) => (
-                  <View
-                    key={item.id}
-                    style={[
-                      styles.exerciseRow,
-                      index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator },
-                    ]}
-                  >
+                entry.entry_exercises.map((item) => (
+                  <View key={item.id} style={styles.exerciseRow}>
+                    <MuscleAvatar group={item.exercise.muscle_group} />
                     <View style={styles.exerciseInfo}>
                       <Text style={[styles.exerciseName, { color: colors.text }]}>
                         {item.exercise.name}
@@ -98,22 +95,26 @@ export default function EntryDetailScreen() {
                   </View>
                 ))
               )}
-            </Card>
+            </View>
 
             {entry.notes ? (
-              <Card>
-                <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Notes</Text>
-                <Text style={[styles.notes, { color: colors.text }]}>{entry.notes}</Text>
-              </Card>
+              <View style={[styles.section, { borderTopColor: colors.separator }]}>
+                <Text style={[styles.notes, { color: colors.text }]}>
+                  <Text style={styles.notesAuthor}>notes </Text>
+                  {entry.notes}
+                </Text>
+              </View>
             ) : null}
 
-            <Button title="Edit Entry" onPress={() => router.push(`/entry/${date}/edit`)} />
-            <Button
-              title="Delete Entry"
-              variant="destructive"
-              onPress={handleDelete}
-              loading={deleting}
-            />
+            <View style={[styles.actions, { borderTopColor: colors.separator }]}>
+              <Button title="Edit Entry" onPress={() => router.push(`/entry/${date}/edit`)} />
+              <Button
+                title="Delete Entry"
+                variant="destructive"
+                onPress={handleDelete}
+                loading={deleting}
+              />
+            </View>
           </>
         )}
       </ScrollView>
@@ -122,23 +123,33 @@ export default function EntryDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 14, paddingBottom: 32 },
-  date: { fontSize: 20, fontWeight: '700' },
+  content: { paddingBottom: 32 },
+  date: { fontSize: 18, fontWeight: '700', paddingHorizontal: 16, paddingVertical: 14 },
   loader: { marginTop: 24 },
-  emptyCard: { alignItems: 'center', gap: 14 },
+  empty: { alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingTop: 24 },
   emptyText: { fontSize: 15 },
-  exercisesCard: { paddingVertical: 4 },
+  section: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  noExercises: { paddingVertical: 8 },
   exerciseRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 8,
     gap: 12,
   },
   exerciseInfo: { flex: 1 },
-  exerciseName: { fontSize: 16, fontWeight: '600' },
-  exerciseGroup: { fontSize: 13, marginTop: 2 },
-  exerciseStats: { fontSize: 15, fontWeight: '500' },
-  notesLabel: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', marginBottom: 6 },
-  notes: { fontSize: 15, lineHeight: 22 },
+  exerciseName: { fontSize: 15, fontWeight: '600' },
+  exerciseGroup: { fontSize: 13, marginTop: 1 },
+  exerciseStats: { fontSize: 14, fontWeight: '500' },
+  notes: { fontSize: 14, lineHeight: 20, paddingVertical: 4 },
+  notesAuthor: { fontWeight: '700' },
+  actions: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 6,
+  },
 });

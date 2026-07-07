@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { MuscleAvatar } from '@/components/muscle-avatar';
 import { showAlert } from '@/lib/alert';
 import { createCustomExercise, fetchExercises } from '@/lib/api';
 import { useTheme } from '@/lib/theme';
@@ -73,31 +75,37 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.separator }]}>
           <Text style={[styles.title, { color: colors.text }]}>Choose Exercise</Text>
           <Pressable onPress={onClose} hitSlop={12}>
-            <Text style={[styles.close, { color: colors.primary }]}>Close</Text>
+            <Ionicons name="close" size={26} color={colors.text} />
           </Pressable>
         </View>
 
-        <TextInput
+        <View
           style={[
-            styles.search,
-            {
-              backgroundColor: colors.inputBackground,
-              borderColor: colors.inputBorder,
-              color: colors.text,
-            },
+            styles.searchWrap,
+            { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder },
           ]}
-          placeholder="Search or type a new exercise…"
-          placeholderTextColor={colors.textMuted}
-          value={search}
-          onChangeText={(text) => {
-            setSearch(text);
-            setAdding(false);
-          }}
-          autoCorrect={false}
-        />
+        >
+          <Ionicons name="search" size={17} color={colors.textMuted} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search or type a new exercise…"
+            placeholderTextColor={colors.textMuted}
+            value={search}
+            onChangeText={(text) => {
+              setSearch(text);
+              setAdding(false);
+            }}
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <Pressable onPress={() => setSearch('')} hitSlop={8}>
+              <Ionicons name="close-circle" size={17} color={colors.textMuted} />
+            </Pressable>
+          )}
+        </View>
 
         {exercises === null ? (
           <ActivityIndicator style={styles.loader} color={colors.primary} />
@@ -118,14 +126,12 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
                   onSelect(item);
                   onClose();
                 }}
-                style={({ pressed }) => [
-                  styles.row,
-                  { backgroundColor: pressed ? colors.primarySoft : colors.card, borderColor: colors.cardBorder },
-                ]}
+                style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }]}
               >
+                <MuscleAvatar group={item.muscle_group} size={36} />
                 <Text style={[styles.rowText, { color: colors.text }]}>{item.name}</Text>
                 {item.is_custom && (
-                  <Text style={[styles.customBadge, { color: colors.primary }]}>custom</Text>
+                  <Text style={[styles.customBadge, { color: colors.textMuted }]}>custom</Text>
                 )}
               </Pressable>
             )}
@@ -144,7 +150,7 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
                           style={[
                             styles.chip,
                             {
-                              backgroundColor: newGroup === group ? colors.primary : colors.card,
+                              backgroundColor: newGroup === group ? colors.primary : 'transparent',
                               borderColor: newGroup === group ? colors.primary : colors.inputBorder,
                             },
                           ]}
@@ -153,6 +159,7 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
                             style={{
                               color: newGroup === group ? colors.primaryText : colors.text,
                               fontSize: 13,
+                              fontWeight: newGroup === group ? '600' : '400',
                             }}
                           >
                             {group}
@@ -163,13 +170,7 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
                     <Button title="Save custom exercise" onPress={handleAddCustom} loading={saving} />
                   </View>
                 ) : (
-                  <Button
-                    title={
-                      search.trim()
-                        ? `＋ Add “${search.trim()}” as custom exercise`
-                        : '＋ Add custom exercise'
-                    }
-                    variant="secondary"
+                  <Pressable
                     onPress={() => {
                       if (!search.trim()) {
                         showAlert(
@@ -180,7 +181,16 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
                       }
                       setAdding(true);
                     }}
-                  />
+                    style={styles.addAction}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+                    <Text style={[styles.addActionText, { color: colors.primary }]}>
+                      {search.trim()
+                        ? `Add “${search.trim()}” as custom exercise`
+                        : 'Add custom exercise'}
+                    </Text>
+                  </Pressable>
                 )}
               </View>
             }
@@ -200,40 +210,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  title: { fontSize: 20, fontWeight: '700' },
-  close: { fontSize: 16, fontWeight: '600' },
-  search: {
+  title: { fontSize: 17, fontWeight: '700' },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginHorizontal: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 16,
+    marginVertical: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
+  searchInput: { flex: 1, fontSize: 15, padding: 0 },
   loader: { marginTop: 40 },
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
   sectionHeader: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
-    marginTop: 16,
+    letterSpacing: 0.4,
+    marginTop: 18,
     marginBottom: 6,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 6,
+    gap: 12,
+    paddingVertical: 7,
   },
-  rowText: { fontSize: 16 },
-  customBadge: { fontSize: 12, fontWeight: '600' },
-  footer: { marginTop: 16 },
+  rowText: { flex: 1, fontSize: 15 },
+  customBadge: { fontSize: 12 },
+  footer: { marginTop: 20 },
+  addAction: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  addActionText: { fontSize: 15, fontWeight: '600' },
   addForm: { gap: 12 },
   addLabel: { fontSize: 14 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

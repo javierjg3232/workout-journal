@@ -26,13 +26,20 @@ export function Button({
   loading = false,
   style,
 }: ButtonProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
+  // Instagram button language: filled blue primary, gray filled secondary,
+  // red text-only destructive.
   const background =
-    variant === 'primary' ? colors.primary : variant === 'destructive' ? colors.dangerSoft : colors.card;
+    variant === 'primary'
+      ? colors.primary
+      : variant === 'secondary'
+        ? isDark
+          ? '#262626'
+          : '#EFEFEF'
+        : 'transparent';
   const textColor =
     variant === 'primary' ? colors.primaryText : variant === 'destructive' ? colors.danger : colors.text;
-  const borderColor = variant === 'secondary' ? colors.inputBorder : 'transparent';
 
   return (
     <Pressable
@@ -41,12 +48,12 @@ export function Button({
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: background, borderColor, opacity: disabled || loading ? 0.5 : pressed ? 0.8 : 1 },
+        { backgroundColor: background, opacity: disabled || loading ? 0.5 : pressed ? 0.7 : 1 },
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <ActivityIndicator color={variant === 'destructive' ? colors.danger : textColor} />
       ) : (
         <Text style={[styles.label, { color: textColor }]}>{title}</Text>
       )}
@@ -58,13 +65,13 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    minHeight: 44,
   },
   label: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

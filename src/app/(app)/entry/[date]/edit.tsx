@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -13,8 +14,8 @@ import {
 } from 'react-native';
 
 import { Button } from '@/components/button';
-import { Card } from '@/components/card';
 import { ExercisePicker } from '@/components/exercise-picker';
+import { MuscleAvatar } from '@/components/muscle-avatar';
 import { showAlert } from '@/lib/alert';
 import { fetchEntryByDate, fetchProfile, saveEntry, type EntryItemInput } from '@/lib/api';
 import { formatDisplayDate, formatShortDate } from '@/lib/dates';
@@ -181,10 +182,16 @@ export default function EntryEditScreen() {
           <Text style={[styles.date, { color: colors.text }]}>{formatDisplayDate(date)}</Text>
 
           {items.map((item, index) => (
-            <Card key={item.key} style={styles.itemCard}>
+            <View
+              key={item.key}
+              style={[styles.itemSection, { borderTopColor: colors.separator }]}
+            >
               <View style={styles.itemHeader}>
+                <MuscleAvatar group={item.exercise.muscle_group} size={36} />
                 <View style={styles.itemTitleWrap}>
-                  <Text style={[styles.itemName, { color: colors.text }]}>{item.exercise.name}</Text>
+                  <Text style={[styles.itemName, { color: colors.text }]}>
+                    {item.exercise.name}
+                  </Text>
                   <Text style={[styles.itemGroup, { color: colors.textMuted }]}>
                     {item.exercise.muscle_group}
                   </Text>
@@ -194,20 +201,20 @@ export default function EntryEditScreen() {
                     onPress={() => moveItem(item.key, -1)}
                     hitSlop={8}
                     disabled={index === 0}
-                    style={{ opacity: index === 0 ? 0.3 : 1 }}
+                    style={{ opacity: index === 0 ? 0.25 : 1 }}
                   >
-                    <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>↑</Text>
+                    <Ionicons name="chevron-up" size={20} color={colors.textSecondary} />
                   </Pressable>
                   <Pressable
                     onPress={() => moveItem(item.key, 1)}
                     hitSlop={8}
                     disabled={index === items.length - 1}
-                    style={{ opacity: index === items.length - 1 ? 0.3 : 1 }}
+                    style={{ opacity: index === items.length - 1 ? 0.25 : 1 }}
                   >
-                    <Text style={[styles.actionIcon, { color: colors.textSecondary }]}>↓</Text>
+                    <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
                   </Pressable>
                   <Pressable onPress={() => removeItem(item.key)} hitSlop={8}>
-                    <Text style={[styles.actionIcon, { color: colors.danger }]}>✕</Text>
+                    <Ionicons name="close" size={20} color={colors.danger} />
                   </Pressable>
                 </View>
               </View>
@@ -251,23 +258,26 @@ export default function EntryEditScreen() {
                       onPress={() =>
                         updateItem(item.key, { unit: item.unit === 'lb' ? 'kg' : 'lb' })
                       }
-                      style={[styles.unitToggle, { backgroundColor: colors.primarySoft }]}
+                      style={[styles.unitPill, { borderColor: colors.primary }]}
                     >
-                      <Text style={{ color: colors.primary, fontWeight: '600' }}>{item.unit}</Text>
+                      <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 13 }}>
+                        {item.unit}
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
               </View>
-            </Card>
+            </View>
           ))}
 
-          <Button
-            title="＋ Add Exercise"
-            variant="secondary"
-            onPress={() => setPickerVisible(true)}
-          />
+          <View style={[styles.addRow, { borderTopColor: colors.separator }]}>
+            <Pressable onPress={() => setPickerVisible(true)} style={styles.addButton} hitSlop={8}>
+              <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
+              <Text style={[styles.addText, { color: colors.primary }]}>Add Exercise</Text>
+            </Pressable>
+          </View>
 
-          <Card>
+          <View style={[styles.notesSection, { borderTopColor: colors.separator }]}>
             <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Notes</Text>
             <TextInput
               style={[styles.notesInput, { color: colors.text }]}
@@ -278,9 +288,11 @@ export default function EntryEditScreen() {
               multiline
               textAlignVertical="top"
             />
-          </Card>
+          </View>
 
-          <Button title="Save Entry" onPress={handleSave} loading={saving} />
+          <View style={styles.saveWrap}>
+            <Button title="Save Entry" onPress={handleSave} loading={saving} />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -296,35 +308,55 @@ export default function EntryEditScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  content: { padding: 16, gap: 14, paddingBottom: 48 },
-  date: { fontSize: 20, fontWeight: '700' },
-  itemCard: { gap: 12 },
-  itemHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  itemTitleWrap: { flex: 1, paddingRight: 8 },
-  itemName: { fontSize: 16, fontWeight: '600' },
-  itemGroup: { fontSize: 13, marginTop: 2 },
-  itemActions: { flexDirection: 'row', gap: 16, alignItems: 'center' },
-  actionIcon: { fontSize: 18, fontWeight: '600' },
+  content: { paddingBottom: 48 },
+  date: { fontSize: 18, fontWeight: '700', paddingHorizontal: 16, paddingVertical: 14 },
+  itemSection: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  itemHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  itemTitleWrap: { flex: 1 },
+  itemName: { fontSize: 15, fontWeight: '600' },
+  itemGroup: { fontSize: 13, marginTop: 1 },
+  itemActions: { flexDirection: 'row', gap: 14, alignItems: 'center' },
   fieldsRow: { flexDirection: 'row', gap: 10 },
   field: { gap: 4 },
   weightField: { flex: 1 },
   fieldLabel: { fontSize: 12, fontWeight: '600' },
   numberInput: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 16,
-    minWidth: 60,
+    fontSize: 15,
+    minWidth: 58,
     textAlign: 'center',
   },
   weightRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   weightInput: { flex: 1, textAlign: 'left' },
-  unitToggle: {
-    borderRadius: 10,
+  unitPill: {
+    borderWidth: 1,
+    borderRadius: 16,
     paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingVertical: 7,
   },
-  notesLabel: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', marginBottom: 6 },
+  addRow: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingVertical: 14 },
+  addButton: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
+  addText: { fontSize: 15, fontWeight: '600' },
+  notesSection: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  notesLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 6,
+  },
   notesInput: { fontSize: 15, minHeight: 90, lineHeight: 21 },
+  saveWrap: { paddingHorizontal: 16, paddingTop: 8 },
 });

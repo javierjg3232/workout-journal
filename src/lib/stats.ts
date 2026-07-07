@@ -23,6 +23,20 @@ export function workoutsThisYear(dateKeys: Iterable<string>, today: string): num
   return count;
 }
 
+/** Number of distinct workout days in the same calendar month as `today`. */
+export function workoutsThisMonth(dateKeys: Iterable<string>, today: string): number {
+  const month = today.slice(0, 7); // YYYY-MM
+  let count = 0;
+  const seen = new Set<string>();
+  for (const key of dateKeys) {
+    if (key.slice(0, 7) === month && !seen.has(key)) {
+      seen.add(key);
+      count++;
+    }
+  }
+  return count;
+}
+
 /**
  * Current streak, honoring the user's planned rest days.
  *

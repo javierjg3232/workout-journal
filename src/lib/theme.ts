@@ -1,5 +1,7 @@
 import { useColorScheme } from 'react-native';
 
+import type { MuscleGroup } from './types';
+
 export interface ThemeColors {
   background: string;
   card: string;
@@ -20,44 +22,67 @@ export interface ThemeColors {
   separator: string;
 }
 
+/** Instagram-style light palette: white, content-forward, hairline separators. */
 export const lightColors: ThemeColors = {
-  background: '#F4F5F7',
+  background: '#FFFFFF',
   card: '#FFFFFF',
-  cardBorder: '#E7E8EC',
-  text: '#17181C',
-  textSecondary: '#4B4E57',
-  textMuted: '#8A8D97',
-  primary: '#2F6FED',
+  cardBorder: '#DBDBDB',
+  text: '#262626',
+  textSecondary: '#737373',
+  textMuted: '#8E8E8E',
+  primary: '#0095F6',
   primaryText: '#FFFFFF',
-  primarySoft: '#E8EFFD',
-  danger: '#D6453D',
-  dangerSoft: '#FBEAE9',
-  success: '#1F9D55',
-  warning: '#B7791F',
-  warningSoft: '#FCF3E3',
-  inputBackground: '#FFFFFF',
-  inputBorder: '#D8DAE0',
-  separator: '#ECEDF1',
+  primarySoft: '#E0F1FF',
+  danger: '#ED4956',
+  dangerSoft: '#FDECEE',
+  success: '#2ECC71',
+  warning: '#C77700',
+  warningSoft: '#FFF4E3',
+  inputBackground: '#FAFAFA',
+  inputBorder: '#DBDBDB',
+  separator: '#DBDBDB',
 };
 
+/** Instagram-style dark palette: pure black. */
 export const darkColors: ThemeColors = {
-  background: '#101114',
-  card: '#1B1D22',
-  cardBorder: '#2A2D34',
-  text: '#F2F3F5',
-  textSecondary: '#B6B9C2',
-  textMuted: '#7C8089',
-  primary: '#5B8DF2',
+  background: '#000000',
+  card: '#000000',
+  cardBorder: '#262626',
+  text: '#F5F5F5',
+  textSecondary: '#A8A8A8',
+  textMuted: '#737373',
+  primary: '#0095F6',
   primaryText: '#FFFFFF',
-  primarySoft: '#22304C',
-  danger: '#E5675F',
-  dangerSoft: '#3C2523',
-  success: '#3FBF77',
-  warning: '#D9A048',
-  warningSoft: '#37301F',
-  inputBackground: '#22242B',
-  inputBorder: '#383B44',
-  separator: '#26282F',
+  primarySoft: '#0E2A3E',
+  danger: '#ED4956',
+  dangerSoft: '#2C1215',
+  success: '#2ECC71',
+  warning: '#E8A33D',
+  warningSoft: '#2B2010',
+  inputBackground: '#121212',
+  inputBorder: '#363636',
+  separator: '#262626',
+};
+
+/** The Instagram story-ring gradient, yellow → orange → pink → purple → blue. */
+export const storyGradient = [
+  '#FEDA75',
+  '#FA7E1E',
+  '#D62976',
+  '#962FBF',
+  '#4F5BD5',
+] as const;
+
+/** Accent color per muscle group, for avatar circles in exercise lists. */
+export const muscleGroupColors: Record<MuscleGroup, string> = {
+  Chest: '#D62976',
+  Back: '#4F5BD5',
+  Legs: '#FA7E1E',
+  Shoulders: '#962FBF',
+  Arms: '#0095F6',
+  Core: '#2ECC71',
+  Cardio: '#ED4956',
+  Other: '#8E8E8E',
 };
 
 export function useTheme(): { colors: ThemeColors; isDark: boolean } {
