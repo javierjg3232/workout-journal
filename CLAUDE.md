@@ -15,7 +15,7 @@ Requires a `.env` with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON
 
 ## Architecture
 
-Expo SDK 57 + TypeScript + expo-router (file routing under `src/app`), Supabase backend. Path alias `@/*` → `src/*`.
+Expo SDK 54 + TypeScript + expo-router (file routing under `src/app`), Supabase backend. Path alias `@/*` → `src/*`.
 
 **Auth gating:** `src/app/_layout.tsx` switches between the `(auth)` and `(app)` route groups with `Stack.Protected`, driven by `AuthProvider` (`src/context/auth.tsx`) which subscribes to the Supabase session. No screen checks auth itself.
 
