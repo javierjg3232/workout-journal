@@ -21,7 +21,7 @@ Expo SDK 57 + TypeScript + expo-router (file routing under `src/app`), Supabase 
 
 **Routing identity is the date, not the entry id.** One journal entry per user per day, enforced by a DB unique constraint on `(user_id, entry_date)`. Screens are `entry/[date]/index` (detail) and `entry/[date]/edit` (create *and* edit — it loads an existing entry for that date if present). Date keys are local-timezone `YYYY-MM-DD` strings produced by `src/lib/dates.ts` (parses at local noon to avoid DST edges); never use `Date.toISOString()` for date keys.
 
-**Data layer:** all Supabase queries live in `src/lib/api.ts`; screens never import the client directly except for auth calls. `saveEntry` upserts the entry row then deletes-and-reinserts all its `entry_exercises` (sort_order = array index). There is no client cache or state library — screens refetch on focus via `useFocusEffect`.
+**Data layer:** all Supabase queries live in `src/lib/api.ts`; screens never import the client directly except for auth calls. `saveEntry` calls the `save_entry` Postgres function (atomic replace of the entry row + its `entry_exercises`, sort_order = array index), falling back to a client-side insert-then-delete path if the function isn't applied to the Supabase project yet. There is no client cache or state library — screens refetch on focus via `useFocusEffect`.
 
 **Streak logic** (`src/lib/stats.ts`, pure and unit-tested): a streak survives as long as every rolling 7-day window contains at most `profiles.rest_days_per_week` non-workout days; today never breaks it (reported as `atRisk` instead). Change behavior here in tandem with the tests, which document the intended semantics.
 
@@ -31,4 +31,4 @@ Expo SDK 57 + TypeScript + expo-router (file routing under `src/app`), Supabase 
 - `app.json` sets `web.output: "single"` — static/SSR output crashes because the Supabase client touches `window` at import time. `src/lib/supabase.ts` also only passes AsyncStorage as auth storage on native.
 - React Native's `Alert` is a silent no-op on react-native-web. Always use `showAlert`/`confirmAction` from `src/lib/alert.ts` for dialogs.
 
-**Theming:** `useTheme()` from `src/lib/theme.ts` supplies light/dark palettes keyed off the system color scheme; components take colors from it rather than hardcoding. No UI kit — shared primitives are `src/components/button.tsx` and `card.tsx`. `react-native-calendars` needs a `key` remount to pick up theme changes (see home screen).
+**Theming:** `useTheme()` from `src/lib/theme.ts` supplies light/dark palettes keyed off the system color scheme; components take colors from it rather than hardcoding. No UI kit — shared primitives live in `src/components/` (`button.tsx`, `stat-ring.tsx`, `muscle-avatar.tsx`, `wordmark.tsx`). `react-native-calendars` needs a `key` remount to pick up theme changes (see home screen).

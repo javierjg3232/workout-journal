@@ -64,6 +64,43 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- ============================================================ atomic entry save
+
+-- Replaces the whole entry (row + exercises) in one transaction so a dropped
+-- connection can't wipe the old exercises without writing the new ones.
+-- Runs as the caller (security invoker), so RLS still applies.
+create or replace function public.save_entry(
+  p_entry_date date,
+  p_notes text,
+  p_items jsonb
+) returns void
+language plpgsql
+as $$
+declare
+  v_entry_id uuid;
+begin
+  insert into public.journal_entries (user_id, entry_date, notes)
+  values (auth.uid(), p_entry_date, nullif(trim(p_notes), ''))
+  on conflict (user_id, entry_date)
+  do update set notes = excluded.notes
+  returning id into v_entry_id;
+
+  delete from public.entry_exercises where entry_id = v_entry_id;
+
+  insert into public.entry_exercises
+    (entry_id, exercise_id, sets, reps, weight, weight_unit, sort_order)
+  select
+    v_entry_id,
+    (item->>'exercise_id')::uuid,
+    (item->>'sets')::int,
+    (item->>'reps')::int,
+    (item->>'weight')::numeric,
+    item->>'weight_unit',
+    ord - 1
+  from jsonb_array_elements(p_items) with ordinality as t(item, ord);
+end;
+$$;
+
 -- ============================================================ row level security
 
 alter table public.profiles enable row level security;

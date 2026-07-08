@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -18,7 +18,7 @@ import { StatRing } from '@/components/stat-ring';
 import { fetchEntryByDate, fetchProfile, fetchWorkoutDates } from '@/lib/api';
 import { formatDisplayDate, todayKey } from '@/lib/dates';
 import { currentStreak, workoutsThisMonth, workoutsThisYear } from '@/lib/stats';
-import { useTheme } from '@/lib/theme';
+import { storyGradient, useTheme } from '@/lib/theme';
 import type { EntryWithExercises } from '@/lib/types';
 
 export default function HomeScreen() {
@@ -34,6 +34,9 @@ export default function HomeScreen() {
   const [selectedEntry, setSelectedEntry] = useState<EntryWithExercises | null | undefined>(
     undefined
   );
+  const [previewError, setPreviewError] = useState(false);
+  // Guards against out-of-order responses when tapping days quickly.
+  const previewDateRef = useRef(selectedDate);
 
   const load = useCallback(async () => {
     try {
@@ -47,19 +50,31 @@ export default function HomeScreen() {
   }, []);
 
   const loadEntry = useCallback(async (date: string) => {
+    previewDateRef.current = date;
     setSelectedEntry(undefined);
+    setPreviewError(false);
     try {
-      setSelectedEntry(await fetchEntryByDate(date));
+      const entry = await fetchEntryByDate(date);
+      if (previewDateRef.current === date) setSelectedEntry(entry);
     } catch {
-      setSelectedEntry(null);
+      if (previewDateRef.current === date) {
+        setSelectedEntry(null);
+        setPreviewError(true);
+      }
     }
   }, []);
 
+  // Separate effects: tapping a day only refetches that day's entry, not the
+  // whole calendar and profile.
   useFocusEffect(
     useCallback(() => {
       load();
+    }, [load])
+  );
+  useFocusEffect(
+    useCallback(() => {
       loadEntry(selectedDate);
-    }, [load, loadEntry, selectedDate])
+    }, [loadEntry, selectedDate])
   );
 
   const dateSet = useMemo(() => new Set(workoutDates ?? []), [workoutDates]);
@@ -130,10 +145,10 @@ export default function HomeScreen() {
       <View style={styles.ringsRow}>
         <StatRing
           value={streak.days}
-          label={streak.atRisk ? 'Work out today!' : 'streak'}
-          active={streak.days > 0 && !streak.atRisk}
-          color={colors.danger}
-          labelColor={streak.atRisk ? colors.warning : undefined}
+          label="streak"
+          active={streak.days > 0}
+          color={streak.atRisk ? colors.warning : colors.danger}
+          gradient={streak.atRisk ? undefined : storyGradient}
         />
         <StatRing
           value={yearCount}
@@ -149,12 +164,24 @@ export default function HomeScreen() {
         />
       </View>
 
+      {streak.atRisk && (
+        <Text style={[styles.hint, { color: colors.warning }]}>
+          Work out today to keep your streak alive.
+        </Text>
+      )}
+      {dateSet.size === 0 && (
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>
+          Tap + below to log your first workout.
+        </Text>
+      )}
+
       <View style={[styles.hairline, { backgroundColor: colors.separator }]} />
 
       <Calendar
         key={isDark ? 'dark' : 'light'}
         markedDates={markedDates}
         onDayPress={handleDayPress}
+        maxDate={today}
         enableSwipeMonths
         theme={{
           calendarBackground: 'transparent',
@@ -180,7 +207,19 @@ export default function HomeScreen() {
           <ActivityIndicator color={colors.primary} style={styles.previewLoader} />
         )}
 
-        {selectedEntry === null && (
+        {selectedEntry === null && previewError && (
+          <View style={styles.noEntry}>
+            <Text style={[styles.noEntryText, { color: colors.danger }]}>
+              Couldn’t load this day’s entry.
+            </Text>
+            <Pressable onPress={() => loadEntry(selectedDate)} style={styles.addAction} hitSlop={8}>
+              <Ionicons name="refresh" size={18} color={colors.primary} />
+              <Text style={[styles.addActionText, { color: colors.primary }]}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {selectedEntry === null && !previewError && (
           <View style={styles.noEntry}>
             <Text style={[styles.noEntryText, { color: colors.textSecondary }]}>
               {selectedIsToday ? 'No entry for today.' : 'No entry for this day.'}
@@ -245,6 +284,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   hairline: { height: StyleSheet.hairlineWidth },
+  hint: { fontSize: 13, textAlign: 'center', paddingHorizontal: 16, paddingBottom: 12 },
   preview: { paddingHorizontal: 16, paddingVertical: 14, gap: 10 },
   previewDate: { fontSize: 16, fontWeight: '700' },
   previewLoader: { marginTop: 8, alignSelf: 'flex-start' },

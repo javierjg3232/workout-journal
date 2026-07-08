@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
@@ -17,14 +18,17 @@ export default function SettingsScreen() {
   const [restDays, setRestDays] = useState<number | null>(null);
   const [unit, setUnit] = useState<WeightUnit>('lb');
 
-  useEffect(() => {
-    fetchProfile()
-      .then((profile) => {
-        setRestDays(profile.rest_days_per_week);
-        setUnit(profile.preferred_unit);
-      })
-      .catch(() => showAlert('Error', 'Could not load your settings.'));
-  }, []);
+  // Refetch on focus so profile changes made elsewhere (another device) show up.
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile()
+        .then((profile) => {
+          setRestDays(profile.rest_days_per_week);
+          setUnit(profile.preferred_unit);
+        })
+        .catch(() => showAlert('Error', 'Could not load your settings.'));
+    }, [])
+  );
 
   async function changeRestDays(value: number) {
     const previous = restDays;

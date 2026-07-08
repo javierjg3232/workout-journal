@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, Stack, useLocalSearchParams, useNavigation } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/button';
 import { ExercisePicker } from '@/components/exercise-picker';
 import { MuscleAvatar } from '@/components/muscle-avatar';
-import { showAlert } from '@/lib/alert';
+import { confirmAction, showAlert } from '@/lib/alert';
 import { fetchEntryByDate, fetchProfile, saveEntry, type EntryItemInput } from '@/lib/api';
 import { formatDisplayDate, formatShortDate } from '@/lib/dates';
 import { useTheme } from '@/lib/theme';
@@ -39,6 +39,7 @@ function nextKey(): string {
 export default function EntryEditScreen() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const [loaded, setLoaded] = useState(false);
   const [isExisting, setIsExisting] = useState(false);
   const [items, setItems] = useState<DraftItem[]>([]);
@@ -46,6 +47,24 @@ export default function EntryEditScreen() {
   const [defaultUnit, setDefaultUnit] = useState<WeightUnit>('lb');
   const [pickerVisible, setPickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Unsaved-changes guard: set on any edit, cleared once a save goes through.
+  const dirtyRef = useRef(false);
+  const savedRef = useRef(false);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
+      if (!dirtyRef.current || savedRef.current) return;
+      event.preventDefault();
+      confirmAction({
+        title: 'Discard changes?',
+        message: 'This entry has unsaved changes.',
+        confirmText: 'Discard',
+        destructive: true,
+        onConfirm: () => navigation.dispatch(event.data.action),
+      });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     let active = true;
@@ -81,6 +100,7 @@ export default function EntryEditScreen() {
   }, [date]);
 
   function addExercise(exercise: Exercise) {
+    dirtyRef.current = true;
     setItems((current) => [
       ...current,
       { key: nextKey(), exercise, sets: '3', reps: '10', weight: '', unit: defaultUnit },
@@ -88,16 +108,19 @@ export default function EntryEditScreen() {
   }
 
   function updateItem(key: string, changes: Partial<DraftItem>) {
+    dirtyRef.current = true;
     setItems((current) =>
       current.map((item) => (item.key === key ? { ...item, ...changes } : item))
     );
   }
 
   function removeItem(key: string) {
+    dirtyRef.current = true;
     setItems((current) => current.filter((item) => item.key !== key));
   }
 
   function moveItem(key: string, direction: -1 | 1) {
+    dirtyRef.current = true;
     setItems((current) => {
       const index = current.findIndex((item) => item.key === key);
       const target = index + direction;
@@ -115,9 +138,10 @@ export default function EntryEditScreen() {
     }
     const payload: EntryItemInput[] = [];
     for (const item of items) {
-      const sets = parseInt(item.sets, 10);
-      const reps = parseInt(item.reps, 10);
-      if (!Number.isFinite(sets) || sets <= 0 || !Number.isFinite(reps) || reps <= 0) {
+      // Number() (not parseInt) so junk like "3abc" or "3.5" is rejected, not truncated.
+      const sets = Number(item.sets.trim());
+      const reps = Number(item.reps.trim());
+      if (!Number.isInteger(sets) || sets <= 0 || !Number.isInteger(reps) || reps <= 0) {
         showAlert('Check your numbers', `Enter valid sets and reps for ${item.exercise.name}.`);
         return;
       }
@@ -139,6 +163,7 @@ export default function EntryEditScreen() {
     setSaving(true);
     try {
       await saveEntry(date, notes, payload);
+      savedRef.current = true;
       if (isExisting) {
         router.back();
       } else {
@@ -167,7 +192,17 @@ export default function EntryEditScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: `${isExisting ? 'Edit' : 'New'} · ${formatShortDate(date)}` }}
+        options={{
+          title: `${isExisting ? 'Edit' : 'New'} · ${formatShortDate(date)}`,
+          headerRight: () =>
+            saving ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <Pressable onPress={handleSave} hitSlop={8} accessibilityRole="button">
+                <Text style={[styles.headerSave, { color: colors.primary }]}>Save</Text>
+              </Pressable>
+            ),
+        }}
       />
       <KeyboardAvoidingView
         style={styles.flex}
@@ -202,6 +237,8 @@ export default function EntryEditScreen() {
                     hitSlop={8}
                     disabled={index === 0}
                     style={{ opacity: index === 0 ? 0.25 : 1 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move ${item.exercise.name} up`}
                   >
                     <Ionicons name="chevron-up" size={20} color={colors.textSecondary} />
                   </Pressable>
@@ -210,10 +247,17 @@ export default function EntryEditScreen() {
                     hitSlop={8}
                     disabled={index === items.length - 1}
                     style={{ opacity: index === items.length - 1 ? 0.25 : 1 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move ${item.exercise.name} down`}
                   >
                     <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
                   </Pressable>
-                  <Pressable onPress={() => removeItem(item.key)} hitSlop={8}>
+                  <Pressable
+                    onPress={() => removeItem(item.key)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${item.exercise.name}`}
+                  >
                     <Ionicons name="close" size={20} color={colors.danger} />
                   </Pressable>
                 </View>
@@ -282,7 +326,10 @@ export default function EntryEditScreen() {
             <TextInput
               style={[styles.notesInput, { color: colors.text }]}
               value={notes}
-              onChangeText={setNotes}
+              onChangeText={(text) => {
+                dirtyRef.current = true;
+                setNotes(text);
+              }}
               placeholder="How did it go? Energy, PRs, aches…"
               placeholderTextColor={colors.textMuted}
               multiline
@@ -359,4 +406,5 @@ const styles = StyleSheet.create({
   },
   notesInput: { fontSize: 15, minHeight: 90, lineHeight: 21 },
   saveWrap: { paddingHorizontal: 16, paddingTop: 8 },
+  headerSave: { fontSize: 16, fontWeight: '600' },
 });

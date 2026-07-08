@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/lib/theme';
@@ -9,45 +10,54 @@ interface StatRingProps {
   active: boolean;
   /** Ring color when active. */
   color: string;
-  labelColor?: string;
+  /** Gradient ring colors; overrides `color` when active. */
+  gradient?: readonly [string, string, ...string[]];
   size?: number;
 }
 
 /** Instagram-story-style stat: a number inside a colored (or gray) ring, caption below. */
-export function StatRing({ value, label, active, color, labelColor, size = 72 }: StatRingProps) {
+export function StatRing({ value, label, active, color, gradient, size = 72 }: StatRingProps) {
   const { colors } = useTheme();
   const ringWidth = 3;
   const gap = 3;
   const innerSize = size - (ringWidth + gap) * 2;
 
+  const ringShape = { width: size, height: size, borderRadius: size / 2 };
+  const inner = (
+    <View
+      style={[
+        styles.inner,
+        {
+          width: innerSize,
+          height: innerSize,
+          borderRadius: innerSize / 2,
+          backgroundColor: colors.background,
+        },
+      ]}
+    >
+      <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.wrap}>
-      <View
-        style={[
-          styles.ring,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: active ? color : colors.separator,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.inner,
-            {
-              width: innerSize,
-              height: innerSize,
-              borderRadius: innerSize / 2,
-              backgroundColor: colors.background,
-            },
-          ]}
+      {active && gradient ? (
+        <LinearGradient
+          colors={gradient}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.ring, ringShape]}
         >
-          <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
+          {inner}
+        </LinearGradient>
+      ) : (
+        <View
+          style={[styles.ring, ringShape, { backgroundColor: active ? color : colors.separator }]}
+        >
+          {inner}
         </View>
-      </View>
-      <Text style={[styles.label, { color: labelColor ?? colors.textSecondary }]}>{label}</Text>
+      )}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }

@@ -33,10 +33,18 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
   const [newGroup, setNewGroup] = useState<MuscleGroup>('Other');
   const [saving, setSaving] = useState(false);
 
+  // Reset the form each time the picker opens (state-during-render, not an effect).
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
+    if (visible) {
+      setSearch('');
+      setAdding(false);
+    }
+  }
+
   useEffect(() => {
     if (!visible) return;
-    setSearch('');
-    setAdding(false);
     fetchExercises()
       .then(setExercises)
       .catch(() => showAlert('Error', 'Could not load the exercise list.'));
@@ -77,7 +85,12 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { borderBottomColor: colors.separator }]}>
           <Text style={[styles.title, { color: colors.text }]}>Choose Exercise</Text>
-          <Pressable onPress={onClose} hitSlop={12}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Close exercise picker"
+          >
             <Ionicons name="close" size={26} color={colors.text} />
           </Pressable>
         </View>
@@ -101,7 +114,12 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
             autoCorrect={false}
           />
           {search.length > 0 && (
-            <Pressable onPress={() => setSearch('')} hitSlop={8}>
+            <Pressable
+              onPress={() => setSearch('')}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
               <Ionicons name="close-circle" size={17} color={colors.textMuted} />
             </Pressable>
           )}
@@ -115,6 +133,13 @@ export function ExercisePicker({ visible, onClose, onSelect }: ExercisePickerPro
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
             stickySectionHeadersEnabled={false}
+            ListEmptyComponent={
+              search.trim() ? (
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  No matches for “{search.trim()}” — add it as a custom exercise below.
+                </Text>
+              ) : null
+            }
             renderSectionHeader={({ section }) => (
               <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>
                 {section.title}
@@ -243,6 +268,7 @@ const styles = StyleSheet.create({
   },
   rowText: { flex: 1, fontSize: 15 },
   customBadge: { fontSize: 12 },
+  emptyText: { fontSize: 14, marginTop: 20, lineHeight: 20 },
   footer: { marginTop: 20 },
   addAction: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   addActionText: { fontSize: 15, fontWeight: '600' },
