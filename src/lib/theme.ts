@@ -64,14 +64,8 @@ export const darkColors: ThemeColors = {
   separator: '#262626',
 };
 
-/** The Instagram story-ring gradient, yellow → orange → pink → purple → blue. */
-export const storyGradient = [
-  '#FEDA75',
-  '#FA7E1E',
-  '#D62976',
-  '#962FBF',
-  '#4F5BD5',
-] as const;
+/** Flame gradient for the streak ring, red → orange. */
+export const streakGradient = ['#ED4956', '#FA7E1E'] as const;
 
 /** Accent color per muscle group, for avatar circles in exercise lists. */
 export const muscleGroupColors: Record<MuscleGroup, string> = {

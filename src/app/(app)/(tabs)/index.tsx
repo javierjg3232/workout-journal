@@ -18,7 +18,7 @@ import { StatRing } from '@/components/stat-ring';
 import { fetchEntryByDate, fetchProfile, fetchWorkoutDates } from '@/lib/api';
 import { formatDisplayDate, todayKey } from '@/lib/dates';
 import { currentStreak, workoutsThisMonth, workoutsThisYear } from '@/lib/stats';
-import { storyGradient, useTheme } from '@/lib/theme';
+import { streakGradient, useTheme } from '@/lib/theme';
 import type { EntryWithExercises } from '@/lib/types';
 
 export default function HomeScreen() {
@@ -148,7 +148,7 @@ export default function HomeScreen() {
           label="streak"
           active={streak.days > 0}
           color={streak.atRisk ? colors.warning : colors.danger}
-          gradient={streak.atRisk ? undefined : storyGradient}
+          gradient={streak.atRisk ? undefined : streakGradient}
         />
         <StatRing
           value={yearCount}
